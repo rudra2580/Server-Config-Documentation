@@ -1,0 +1,321 @@
+VM Specification:
+-------------------
+VERSION="22.04.5 LTS (Jammy Jellyfish)"
+VERSION_CODENAME=jammy
+ID=ubuntu
+ID_LIKE=debian
+
+
+Step 1: Update your Server:
+===========================
+root@rudra:~# apt-get update
+root@rudra:~# apt-get upgrade
+
+Step 2: Add a new system user:
+==============================
+root@rudra:~# adduser --system --home=/opt/odoo --group odoo
+
+Step 3: Installing Packages and libraries:
+=========================================
+root@rudra:~# apt-get install -y python3-pip
+
+Step 3.1: Install  libraries:
+=============================
+root@rudra:~# apt-get install python3-dev libxml2-dev libxslt1-dev zlib1g-dev libsasl2-dev libldap2-dev build-essential libssl-dev libffi-dev libmysqlclient-dev libjpeg-dev libpq-dev libjpeg8-dev liblcms2-dev libblas-dev libatlas-base-dev 
+
+Step 3.2: After installation of the packages and libraries, we need to install some web dependencies:
+=====================================================================================================
+root@rudra:~# apt-get install -y npm
+root@rudra:~# ln -s /usr/bin/nodejs /usr/bin/node
+root@rudra:~# npm install -g less less-plugin-clean-css
+root@rudra:~# apt-get install -y node-less
+
+Step 3.3:Install wkhtmltopdf to print PDF reports. ‘0.12.5’ is the recommended version for Odoo 13:
+===================================================================================================
+root@rudra:~# wget https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.bionic_amd64.deb
+root@rudra:~# dpkg -i wkhtmltox_0.12.5-1.bionic_amd64.deb
+root@rudra:~# apt install –f
+
+Step: 4: Configure PostgreSQL:
+==============================
+root@rudra:~# apt install postgresql -y
+
+
+Step 4.1: After the successful installation of PostgreSQL, you have to create a new PostgreSQL user for managing Odoo databases:
+================================================================================================================================
+root@rudra:~# su - postgres
+postgres@rudra:~$ createuser --createdb --username postgres --no-createrole --no-superuser --pwprompt odoo13
+Enter password for new role: rudra123
+Enter it again:rudra123
+
+postgres@rudra:~$ psql  postgres
+postgres=# alter user odoo13 with superuser;
+ALTER ROLE
+postgres=# \q
+postgres@rudra:~$ exit
+
+Step 5: Clone Odoo from git:
+============================
+root@rudra:~# apt install git -y
+root@rudra:~# su - odoo -s /bin/bash
+odoo@rudra:~$ git clone https://www.github.com/odoo/odoo --depth 1 --branch 13.0 --single-branch .
+odoo@rudra:~$ exit
+
+
+Step 6: Install Required Dependencies for Odoo:
+===============================================
+root@rudra:~# cd /opt/odoo/
+root@rudra:/opt/odoo# ls
+addons  CONTRIBUTING.md  COPYRIGHT  debian  doc  LICENSE  MANIFEST.in  odoo  odoo-bin  README.md  requirements.txt  SECURITY.md  setup  setup.cfg  setup.py
+
+root@rudra:/opt/odoo# pip3 install -r /opt/odoo/requirements.txt
+
+						>>>>>>>>>>>>>>>>>NOTE: If you get error then <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+Step 6.1: Alter native way to downgrade the python version cause, odoo-13 expect python version between 3.6 to 3.8:
+===================================================================================================================
+root@rudra:~# apt update
+root@rudra:~# apt install software-properties-common -y
+root@rudra:~# add-apt-repository ppa:deadsnakes/ppa -y
+root@rudra:~# apt update
+root@rudra:~# apt install python3.8 python3.8-dev python3.8-venv -y
+python3.8 --version
+
+Step 6.2: Create the virtual environment again:
+===============================================
+root@rudra:~# sudo -u odoo -H python3.8 -m venv /opt/odoo/venv
+root@rudra:~# sudo -u odoo -H /opt/odoo/venv/bin/pip install --upgrade pip wheel setuptools
+root@rudra:~# sudo -u odoo -H /opt/odoo/venv/bin/pip install -r /opt/odoo/requirements.txt
+
+			>>>>>>>	NOTE: Now if you get error to install "vatnumber==1.2" dependencies  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+====================================================================================================================
+root@rudra:~# wget http://security.ubuntu.com/ubuntu/pool/universe/v/vatnumber/python3-vatnumber_1.2-9_all.deb    | Note: Try this one 
+root@rudra:~# sudo apt install ./python3-vatnumber_1.2-9_all.deb						  |
+====================================================================================================================
+root@rudra:~# /opt/odoo/venv/bin/pip install "setuptools<58"
+root@rudra:~# /opt/odoo/venv/bin/pip install vatnumber==1.2
+root@rudra:~# sudo -u odoo -H /opt/odoo/venv/bin/pip install -r /opt/odoo/requirements.txt
+
+Final Output:
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Successfully installed Babel-2.6.0 Jinja2-2.10.1 Mako-1.0.7 MarkupSafe-1.1.0 Pillow-5.4.1 PyPDF2-1.26.0 Werkzeug-0.14.1 XlsxWriter-1.1.2 appdirs-1.4.4 attrs-25.3.0 beautifulsoup4-4.13.5 cached-property-2.0.1 certifi-2025.8.3 chardet-3.0.4 decorator-4.3.0 defusedxml-0.7.1 docutils-0.14 ebaysdk-2.1.5 gevent-1.5.0 greenlet-0.4.15 idna-2.8 isodate-0.7.2 libsass-0.17.0 lxml-4.3.2 mock-2.0.0 num2words-0.5.6 ofxparse-0.19 passlib-1.7.1 pbr-7.0.1 polib-1.1.0 psutil-5.6.6 psycopg2-2.8.3 pyasn1-0.6.1 pyasn1_modules-0.4.2 pydot-1.4.1 pyparsing-2.2.0 pyserial-3.4 python-dateutil-2.7.3 python-ldap-3.1.0 pytz-2019.1 pyusb-1.0.2 qrcode-6.1 reportlab-3.5.13 requests-2.21.0 requests-toolbelt-1.0.0 six-1.17.0 soupsieve-2.7 typing-extensions-4.13.2 urllib3-1.24.3 vobject-0.9.6.1 xlrd-1.1.0 xlwt-1.3.0 zeep-3.2.0
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Step 7: Configure Odoo:
+=======================
+root@rudra:~# mkdir -p /var/log/odoo
+root@rudra:~# chown odoo:root /var/log/odoo
+root@rudra:~# ll -al /var/log/odoo
+Output:
+------------------------------------------------
+drwxr-xr-x  2 odoo root   4096 Sep 14 18:40 ./
+drwxrwxr-x 13 root syslog 4096 Sep 14 18:40 ../
+------------------------------------------------
+
+root@rudra:~# sudo cp /opt/odoo/debian/odoo.conf /etc/odoo.conf
+root@rudra:~# vim /etc/odoo.conf
+
+[options]
+; This is the password that allows database operations:
+; admin_passwd = admin
+db_host = localhost
+db_port = 5432
+db_user = odoo13
+db_password = rudra123
+;addons_path = /usr/lib/python3/dist-packages/odoo/addons
+
+; Network
+xmlrpc_port = 8069
+longpolling_port = 8072
+proxy_mode = True
+
+; Workers & performance
+workers = 5
+max_cron_threads = 2
+limit_memory_soft = 536870912
+limit_memory_hard = 671088640
+limit_time_cpu = 60
+limit_time_real = 120
+
+; Logging
+logfile = /var/log/odoo/odoo.log
+log_level = info
+
+; Data directory
+data_dir = /var/lib/odoo
+
+
+root@rudra:~# sudo chown odoo: /etc/odoo.conf
+root@rudra:~# sudo chmod 640 /etc/odoo.conf
+
+Step 8: Test Odoo Installation
+==============================
+root@rudra:~# vim /etc/systemd/system/odoo.service
+
+[Unit]
+Description=Odoo 13
+Documentation=http://www.odoo.com
+Requires=postgresql.service
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+SyslogIdentifier=odoo
+PermissionsStartOnly=true
+User=odoo
+Group=odoo
+ExecStart=/opt/odoo/venv/bin/python3.8 /opt/odoo/odoo-bin -c /etc/odoo.conf
+WorkingDirectory=/opt/odoo
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target
+
+root@rudra:~# systemctl daemon-reexec
+root@rudra:~# systemctl enable --now odoo
+root@rudra:~# systemctl status odoo.service
+
+Output:
+------------------------------------------------------------------------------------------
+● odoo.service - Odoo 13
+     Loaded: loaded (/etc/systemd/system/odoo.service; enabled; vendor preset: enabled)
+     Active: active (running) since Sun 2025-09-14 18:52:32 UTC; 15s ago
+-------------------------------------------------------------------------------------------
+
+		>>> Go to browser http://192.168.122.52:5069 (if you encountered error) please check odoo service status <<<<<<
+
+   		>>> Note: While check odoo status i got following error <<<<<<
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Sep 14 18:55:01 rudra odoo[7582]:     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+Sep 14 18:55:01 rudra odoo[7582]: psycopg2.OperationalError: connection to server at "localhost" (127.0.0.1), port 5432 failed: FATAL:  password authentication failed for u>
+Sep 14 18:55:01 rudra odoo[7582]: connection to server at "localhost" (127.0.0.1), port 5432 failed: FATAL:  password authentication failed for user "odoo" - - -
+Sep 14 18:55:42 rudra systemd[1]: odoo.service: Current command vanished from the unit file, execution of the command list won't be resumed.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Error Reason: this is a PostgreSQL authentication issue, not an Odoo code problem.It means that Odoo is trying to connect to PostgreSQL using:
+User: odoo
+Password: whatever is in /etc/odoo.conf but PostgreSQL rejects the password. Error means we have to set DB password for user "odoo13"
+
+
+Step 8.1: Login to the postgres db and set password:
+====================================================
+root@rudra:~# sudo -u postgres psql
+could not change directory to "/root": Permission denied
+psql (14.19 (Ubuntu 14.19-0ubuntu0.22.04.1))
+Type "help" for help.
+
+postgres=# \du
+                                   List of roles
+ Role name |                         Attributes                         | Member of 
+-----------+------------------------------------------------------------+-----------
+ odoo13    | Superuser, Create DB                                       | {}
+ postgres  | Superuser, Create role, Create DB, Replication, Bypass RLS | {}
+
+postgres=# alter user odoo13 with password 'rudra123';
+
+        -------------------------------------------------------------------------------------------------------------------------
+	|>>> Note: Here i set password "rudra123", cause i have already mentioned the password in /etc/odoo.conf file. <<<<<<<<<|
+	-------------------------------------------------------------------------------------------------------------------------
+
+
+root@rudra:~# systemctl restart postgresql
+root@rudra:~# systemctl status postgresql
+root@rudra:~# systemctl restart odoo
+root@rudra:~# systemctl status odoo
+
+		>>>>>>>>>>>>>>>>>>>>>>>>> >>> Go to browser http://192.168.122.52:5069   <<<<<<<<<<<<<<<<<<<<<<<<<<<
+		DB Name: odoo13
+		email: rudrasraker2015@gmail.com
+		password: admin
+		Mobile: 01744566334
+		Country: Bangladesh
+		
+### Check Odoo Log:
+--------------------
+root@rudra:~# journalctl -u odoo -f
+
+
+Step 9: Web server Nginx:
+==============================
+root@rudra:~# apt install nginx -y
+root@rudra:~# cat /etc/nginx/sites-available/odoo13 
+server {
+    listen 80;
+    server_name 192.168.122.53;
+
+    access_log  /var/log/nginx/odoo.access.log;
+    error_log   /var/log/nginx/odoo.error.log;
+
+    proxy_read_timeout 720s;
+    proxy_connect_timeout 720s;
+    proxy_send_timeout 720s;
+
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Real-IP $remote_addr;
+
+    location / {
+        proxy_pass http://127.0.0.1:8069;
+    }
+
+    location /longpolling {
+        proxy_pass http://127.0.0.1:8072;
+    }
+}
+
+root@rudra:~# nginx -t
+root@rudra:~# ln -s /etc/nginx/sites-available/odoo13 /etc/nginx/sites-enabled/
+root@rudra:~# systemctl stop apache2
+root@rudra:~# systemctl disable apache2
+root@rudra:~# systemctl stop nginx
+root@rudra:~# nginx -t
+root@rudra:~# systemctl start nginx
+root@rudra:~# systemctl status nginx
+
+
+
+Reference: https://www.cybrosys.com/blog/how-to-install-odoo-13-on-ubuntu-20-04-lts
+
+============================================================================================================================= 
+ERROR:  could not open directory "/var/lib/odoo/filestore/attendence": No such file or directory
+
+Script:
+-------
+root@rudra:~# cd /opt/odoo/
+root@rudra:/opt/odoo# vim cleanup_filestore.py
+
+import os
+import psycopg2
+
+DB_NAME = "attendence"
+DB_USER = "odoo13"
+DB_PASS = "rudra123"
+DB_HOST = "localhost"
+
+FILESTORE_PATH = f"/var/lib/odoo/filestore/{DB_NAME}"
+
+conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+cur = conn.cursor()
+
+cur.execute("SELECT id, store_fname FROM ir_attachment WHERE store_fname IS NOT NULL")
+rows = cur.fetchall()
+
+deleted = 0
+for att_id, fname in rows:
+    full_path = os.path.join(FILESTORE_PATH, fname)
+    if not os.path.exists(full_path):
+        cur.execute("DELETE FROM ir_attachment WHERE id = %s", (att_id,))
+        deleted += 1
+
+conn.commit()
+cur.close()
+conn.close()
+
+print(f"✅ Cleanup complete. Deleted {deleted} broken attachments.")
+
+
+root@rudra:/opt/odoo# source venv/bin/activate
+(venv) root@rudra:/opt/odoo# python cleanup_filestore.py
+✅ Cleanup complete. Deleted 260 broken attachments.
+
