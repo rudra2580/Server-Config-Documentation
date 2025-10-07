@@ -1,1 +1,2 @@
-user only for commenting purpose
+Uses only for commenting purposes
+Solving the Logo alignment issue
